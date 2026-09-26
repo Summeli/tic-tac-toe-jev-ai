@@ -3,6 +3,7 @@ import React, { useCallback, useContext, useState } from "react";
 import { getNextMove, PLAYER_NAME } from "./ai";
 import { gameMove, getNextTurn, isWinning, P1, P2 } from "./GameUtil";
 import { recordLoss, recordNotLost, startNewGame } from "./learning";
+import { loadScore, saveScore, Score } from "./score";
 
 const PLAYER_NAME_MIN = 3;
 const PLAYER_NAME_MAX = 30;
@@ -30,8 +31,10 @@ type GameContext = {
     round: number;
     winner: string;
     gameOver: boolean;
+    score: Score;
     nextMove: (col: number, row: number, player: string) => void;
     resetGame: () => void;
+    resetScore: () => void;
   };
 
 type NextMoveRequest = {
@@ -64,12 +67,22 @@ export const GameContextProvider: React.FunctionComponent<GameContextProps> = ({
     const [round, setRound] = useState(0);
     const [winner, setWinner] = useState("");
     const [gameOver, setGameOver] = useState(false);
+    const [score, setScore] = useState<Score>(loadScore);
+
+    const updateScore = useCallback((change: (score: Score) => Score) => {
+      setScore((current) => {
+        const next = change(current);
+        saveScore(next);
+        return next;
+      });
+    }, []);
     
     const nextMove = useCallback((row: number, col: number, player : string) => {
         board[row][col] = player;
         setBoard(board);        
         if(isWinning(board,P1)){
           recordLoss(board);
+          updateScore((s) => ({ ...s, losses: s.losses + 1 }));
           setWinner(P1);
           setGameOver(true);
         }else if( round < 8){
@@ -82,11 +95,12 @@ export const GameContextProvider: React.FunctionComponent<GameContextProps> = ({
           let body: string = JSON.stringify(request);
           axios.post(URL, body)
           .then(response => {
-             setWinner(P2);
+            updateScore((s) => ({ ...s, wins: s.wins + 1 }));
+            setWinner(P2);
             setGameOver(true);
           });
         }
-    },[board,round,turn,playerName]);
+    },[board,round,turn,playerName,updateScore]);
 
     React.useEffect(() => {
       if(turn === P1 && !gameOver){
@@ -113,6 +127,8 @@ export const GameContextProvider: React.FunctionComponent<GameContextProps> = ({
       setGameOver(false);
     };
 
+    const resetScore = () => updateScore(() => ({ wins: 0, losses: 0 }));
+
     if(isPlayerNameValid() && turn !== P1 && turn !== P2){
       resetGame();
     }
@@ -125,8 +141,10 @@ export const GameContextProvider: React.FunctionComponent<GameContextProps> = ({
         round,
         winner,
         gameOver,
+        score,
         nextMove,
-        resetGame
+        resetGame,
+        resetScore
       }}
     >
       {children}

@@ -5,16 +5,17 @@ import { clearLostGames } from './learning';
 
 const GameBoard: React.FunctionComponent = () => {
 
-  const {board,turn, nextMove, resetGame} = useGameContext();
+  const {board,turn, score, nextMove, resetGame, resetScore} = useGameContext();
   let gameStarted: boolean = false; 
-  if (!board || !nextMove || !resetGame) return null;
+  if (!board || !score || !nextMove || !resetGame || !resetScore) return null;
  
   if(turn){
     gameStarted = true;
 }
   const forgetLostGames = () => {
-    if (window.confirm("Remove all of Jev's lost games and start a new game?")) {
+    if (window.confirm("Remove all of Jev's lost games, reset the score and start a new game?")) {
       clearLostGames();
+      resetScore();
       resetGame();
     }
   };
@@ -56,6 +57,9 @@ const GameBoard: React.FunctionComponent = () => {
       <div></div>
       }
       <EndGameView />
+      <div className="score">
+        <p>Wins: {score.wins} &nbsp; Losses: {score.losses}</p>
+      </div>
 
 
   </div>
