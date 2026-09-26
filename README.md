@@ -62,3 +62,28 @@ returns true, if player is winning
 returns true if spot is open
 
 isMovesLeft
+
+# 🤖 How Jev plays
+This version's bot is **Jev**, the `typesafe-ai/jev` model, called through the Vercel AI Gateway. Put your key in `.env` (see `.env.example`). The dev server proxy in `src/setupProxy.js` adds the key server-side, so it never ends up in the browser bundle.
+
+### 🎯 Making a move
+On each turn `getNextMove` in `src/ai.tsx`:
+1. Gets the open cells with `getPossibleMoves` and drops any move that is known to have lost from this exact position (see below). If every move has lost before, it keeps them all.
+2. Sends an `evaluate` request to Jev with:
+   - the board, written out cell by cell (`row 0 column 1: X`, `row 1 column 1: empty`, ...)
+   - who is who (Jev is `O`, the opponent is `X`)
+   - a simple strategy: win if possible, otherwise block, otherwise take the center, then a corner, then an edge, and look for forks
+   - the recent losses, if there are any (see below)
+   - a single `choice` question, "What is your next move?", with one option per open cell
+3. Plays the cell Jev picked. If the request fails or the answer doesn't match an open cell, it falls back to the first open cell.
+
+The full request and response are logged to the browser console with the `[Jev]` prefix.
+
+### 📚 Learning from mistakes
+`src/learning.tsx` gives Jev a memory of its **last 10 lost games**:
+- Every move Jev makes is recorded along with the board it was played on.
+- When Jev loses, the **last move** of that game is marked as a losing move for that position. If that leaves a position where *every* option has lost, the position was already lost, so the move that led there is blamed too, and so on backwards.
+- On later turns, known losing moves are **filtered out** before Jev is asked, so it can't repeat the same mistake from the same position.
+- The blamed moves are also sent to Jev as `recent_losses` (the board before the move, the move, and the final board), so it can avoid similar mistakes in positions it hasn't seen yet.
+
+The lost games are stored in `localStorage`, so the memory survives page reloads. Only the 10 most recent losses are kept, and the **reset Jev's memory** button clears them so Jev starts learning from scratch.
