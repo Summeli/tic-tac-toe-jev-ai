@@ -75,15 +75,21 @@ async function chooseMove(board: string[][], possibleMoves: gameMove[]): Promise
 	const requestBody = {
 		model: MODEL,
 		state: {
+			game: "Tic-tac-toe on a 3x3 grid, rows and columns 0-2.",
+			board_format: `The board is listed cell by cell as "row R column C: value", where "${EMPTY_CELL}" marks an open cell.`,
 			board: describeBoard(board),
 			you: P2,
 			opponent: P1,
-			...(lessons.length > 0 && { losses_this_session: lessons.map(describeLesson) }),
+			strategy: `Win immediately if a winning move exists, otherwise block "${P1}" from winning next turn, otherwise prefer the center, then a corner, then an edge, favoring moves that set up a fork.`,
+			...(lessons.length > 0 && {
+				recent_losses: lessons.map(describeLesson),
+				losses_note: "These are your own earlier moves that led to a loss; avoid repeating the same mistake in similar positions.",
+			}),
 		},
 		questions: {
 			move: {
 				type: "choice",
-				instructions: `Tic-tac-toe (3x3 grid, rows and columns 0-2). The board is listed cell by cell as "row R column C: value", where "${EMPTY_CELL}" marks an open cell. You are playing as "${P2}". Choose the best open cell to play next: win immediately if a winning move exists, otherwise block "${P1}" from winning next turn, otherwise prefer the center, then a corner, then an edge, favoring moves that set up a fork.${lessons.length > 0 ? " `losses_this_session` lists your own earlier moves that led to a loss; avoid repeating the same mistake in similar positions." : ""}`,
+				instructions: "What is your next move?",
 				criteria,
 			},
 		},

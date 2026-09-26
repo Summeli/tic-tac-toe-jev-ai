@@ -1,6 +1,7 @@
 import EndGameView from './EndGameView';
 import GameButton from './GameButton';
 import { useGameContext } from './GameContext';
+import { clearLostGames } from './learning';
 
 const GameBoard: React.FunctionComponent = () => {
 
@@ -11,6 +12,13 @@ const GameBoard: React.FunctionComponent = () => {
   if(turn){
     gameStarted = true;
 }
+  const forgetLostGames = () => {
+    if (window.confirm("Remove all of Jev's lost games and start a new game?")) {
+      clearLostGames();
+      resetGame();
+    }
+  };
+
   const renderGameButton = (row: number, col: number) => {
     let tx : string = board[row][col];
       return (
@@ -43,6 +51,7 @@ const GameBoard: React.FunctionComponent = () => {
        gameStarted ? 
       (<div className="extrabuttoncontainer">
         <button onClick = {resetGame} className= "newGameButton">new Game</button>
+        <button onClick = {forgetLostGames} className= "newGameButton">reset Jev's memory</button>
       </div>) :
       <div></div>
       }
