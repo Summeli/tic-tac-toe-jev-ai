@@ -1,8 +1,8 @@
 import { gameMove, P1, P2 } from "./GameUtil";
 
 /**
- * Memory for Jev: remembers the last MAX_LOSSES lost games and lets later
- * games avoid the moves that led to them. Stored in localStorage, so it
+ * Memory for Jev: remembers the last MAX_LOSSES lost games and turns them
+ * into lessons that are passed to Jev as context. Moves are never filtered. Stored in localStorage, so it
  * survives page reloads.
  */
 
@@ -53,12 +53,6 @@ function boardKey(board: string[][]): string {
 
 function isLosing(key: string, move: gameMove): boolean {
 	return losingMoves.get(key)?.has(moveId(move)) ?? false;
-}
-
-/** Moves from this position that have not (yet) led to a loss. */
-export function filterKnownLosingMoves(board: string[][], possibleMoves: gameMove[]): gameMove[] {
-	const key = boardKey(board);
-	return possibleMoves.filter((move) => !isLosing(key, move));
 }
 
 /** Call for every move Jev makes, before the board is mutated. */

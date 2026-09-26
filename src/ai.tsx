@@ -1,6 +1,6 @@
 import axios from "axios";
 import { gameMove, getPossibleMoves, P1, P2 } from "./GameUtil";
-import { filterKnownLosingMoves, Lesson, moveId, recentLessons, recordMove } from "./learning";
+import { Lesson, moveId, recentLessons, recordMove } from "./learning";
 
 export const PLAYER_NAME = "Jev";
 
@@ -47,17 +47,9 @@ function describeLesson(lesson: Lesson): string {
  * You are P2, return optimal move
 */
 export async function getNextMove(board: string[][], round: number): Promise<gameMove> {
-	const allMoves: gameMove[] = getPossibleMoves(board);
-	// Skip moves that lost from this exact position earlier in the session,
-	// unless every move has lost before.
-	const saferMoves = filterKnownLosingMoves(board, allMoves);
-	const possibleMoves = saferMoves.length > 0 ? saferMoves : allMoves;
-	if (saferMoves.length < allMoves.length) {
-		console.log(`[Jev] Avoiding ${allMoves.length - saferMoves.length} move(s) that lost here before`);
-	}
-
+	const possibleMoves: gameMove[] = getPossibleMoves(board);
 	const move = await chooseMove(board, possibleMoves);
-	recordMove(board, move, allMoves);
+	recordMove(board, move, possibleMoves);
 	return move;
 }
 
