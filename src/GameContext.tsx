@@ -2,6 +2,7 @@ import axios from "axios";
 import React, { useCallback, useContext, useState } from "react";
 import { getNextMove, PLAYER_NAME } from "./ai";
 import { gameMove, getNextTurn, isWinning, P1, P2 } from "./GameUtil";
+import { recordLoss, recordNotLost, startNewGame } from "./learning";
 
 const PLAYER_NAME_MIN = 3;
 const PLAYER_NAME_MAX = 30;
@@ -68,6 +69,7 @@ export const GameContextProvider: React.FunctionComponent<GameContextProps> = ({
         board[row][col] = player;
         setBoard(board);        
         if(isWinning(board,P1)){
+          recordLoss(board);
           setWinner(P1);
           setGameOver(true);
         }else if( round < 8){
@@ -75,6 +77,7 @@ export const GameContextProvider: React.FunctionComponent<GameContextProps> = ({
           setTurn(getNextTurn(turn));
         } else {
           //P2 wins with tie
+          recordNotLost();
           let request : NextMoveRequest = {playerName: playerName, type: "ai",board: board};
           let body: string = JSON.stringify(request);
           axios.post(URL, body)
@@ -95,12 +98,14 @@ export const GameContextProvider: React.FunctionComponent<GameContextProps> = ({
             nextMove(move.row,move.col,P1);
           });
       }else if (turn === P2 && !gameOver){
-        const move : gameMove = getNextMove(board,round);
-        nextMove(move.row,move.col,P2);
+        getNextMove(board,round).then((move: gameMove) => {
+          nextMove(move.row,move.col,P2);
+        });
       }
     }, [turn,gameOver,board,nextMove,playerName,round]);
 
     const resetGame = () => {
+      startNewGame();
       setBoard(grid);
       setTurn(P1);
       setRound(0);
